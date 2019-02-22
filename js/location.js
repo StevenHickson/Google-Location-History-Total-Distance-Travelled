@@ -47,31 +47,34 @@ function getActivitiesDistance(parsed){
     var prevLat = 0;
     var prevLong = 0;
     var prevHeight = 0;
+    var prevDate = new Date();
+    var date_unreached = true;
 
 
+    // Get the proposed start date
+    var start_date = new Date(document.getElementById('startdate').value)
 
     for (var i = parsed.locations.length - 1; i > 0; i--) {
-      if(i == parsed.locations.length - 1){
+      if(i == parsed.locations.length - 1 || date_unreached){
         prevLong = parsed.locations[i].longitudeE7 * Math.pow(10, -7);
         prevLat = parsed.locations[i].latitudeE7 * Math.pow(10, -7);
         prevHeight = parsed.locations[i].altitude;
-        var first_date = new Date(parseFloat(parsed.locations[i].timestampMs));  
-
+        first_date = new Date(parseFloat(parsed.locations[i].timestampMs));
+        prevDate = first_date;
+        if (first_date > start_date) {
+          date_unreached = false;
+        }
 
       }
       else{
         var longitude = parsed.locations[i].longitudeE7 * Math.pow(10, -7);
         var latitude = parsed.locations[i].latitudeE7 * Math.pow(10, -7);
         var height = parsed.locations[i].altitude;
+        var timestamp = new Date(parseFloat(parsed.locations[i].timestampMs));
 
 
         var current_distance = Math.abs(getDistance(prevLat, latitude, prevLong, longitude, prevHeight, height));
-
-        //since phone will be in airplane mode in the air if phone has been disconnected for > 1000 miles we assume they were on a plane
-        if(current_distance > 1000){
-          flew += current_distance;
-          plane_flights++;
-        }
+        var current_speed = current_distance * 1000.0 / (timestamp.getTime() - prevDate.getTime()); 
 
         //if contains activities section
         if(typeof parsed.locations[i].activity !== 'undefined') {
@@ -146,10 +149,21 @@ function getActivitiesDistance(parsed){
               break;
           }
         }
+        else if(current_distance > 1000) {
+        //since phone will be in airplane mode in the air if phone has been disconnected for > 1000 miles we assume they were on a plane
+          flew += current_distance;
+          plane_flights++;
+        } else if(current_speed > 0.00222) {
+          drove += current_distance;
+        } else if(current_speed > 0.000444) {
+          walked += current_distance;
+        }
+
         if(current_distance>0){
            prevLong = longitude;
            prevLat = latitude;
            prevHeight = height;
+           prevDate = timestamp;
         }
 
       }
@@ -264,6 +278,9 @@ function initScroll(actions){
       {selector: '#scrollfire8', offset: 200, callback: function() {
         $("#scrollfire8").removeClass("scale-out");
      } },
+      {selector: '#scrollfire9', offset: 200, callback: function() {
+        $("#scrollfire9").removeClass("scale-out");
+     } },
     ];
     Materialize.scrollFire(options_scrollfire);
 
@@ -297,7 +314,7 @@ function initScroll(actions){
      Materialize.scrollFireEnhanced(options_enhancedScroll);
 
     $("#totalMiles").text(formatThousands(actions.total*0.621371, 2) + " miles");
-    $("#firstDate").text(actions.date.getMonth() + "/" + actions.date.getDate() + '/' + actions.date.getFullYear());
+    $("#firstDate").text(actions.date.getMonth()+1 + "/" + actions.date.getDate() + '/' + actions.date.getFullYear());
     $("#milesDriven").text(formatThousands(actions.driven*.621371, 2));
     $("#inCar").text(formatThousands(actions.exit));
     $("#averageMiles").text(formatThousands(actions.total*.621371/getDays(actions.date), 2));
@@ -307,6 +324,9 @@ function initScroll(actions){
     $("#walked").text(formatThousands(actions.walked*.621371, 2));
     $("#ran").text(formatThousands(actions.ran*.621371, 2));
     $("#biked").text(formatThousands(actions.biked*.621371, 2));
+    $("#planeCo2").text(formatThousands(calcPlaneCo(actions.flew*.621371), 2));
+    $("#carCo2").text(formatThousands(calcCarCo(actions.driven*.621371), 2));
+    $("#savedCo2").text(formatThousands(calcCarCo(actions.walked*.621371+actions.ran*.621371+actions.biked*.621371), 2));
 
 
     //smooth scrolling init
@@ -350,6 +370,15 @@ Math.radians = function(degrees) {
 Math.degrees = function(radians) {
   return radians * 180 / Math.PI;
 };
+
+// Calculates CO2 usage
+function calcPlaneCo(n) {
+  return n * 1.12;
+}
+
+function calcCarCo(n) {
+  return n * 19.64 / 24.7;
+}
 
 //adds commas to numbers; n is number dp is decimal places
 function formatThousands(n, dp) {
