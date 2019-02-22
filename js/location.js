@@ -281,6 +281,9 @@ function initScroll(actions){
       {selector: '#scrollfire9', offset: 200, callback: function() {
         $("#scrollfire9").removeClass("scale-out");
      } },
+      {selector: '#scrollfire10', offset: 200, callback: function() {
+        $("#scrollfire10").removeClass("scale-out");
+     } },
     ];
     Materialize.scrollFire(options_scrollfire);
 
@@ -310,8 +313,16 @@ function initScroll(actions){
         $("#scroll-guy").removeClass("fa-male");        
         $("#scroll-guy").addClass("fa-car");
      } },
+     {selector: '#ecoFootprint', offset: 300, downScrollCallback: function() {
+        $("#scroll-guy").removeClass("fa-male");
+     }, upScrollCallback : function(){
+        $("#scroll-guy").addClass("fa-male");        
+     } },
      ];
      Materialize.scrollFireEnhanced(options_enhancedScroll);
+
+     var planeCo2 = calcPlaneCo(actions.flew*.621371)
+     var carCo2 = calcCarCo(actions.driven*.621371)
 
     $("#totalMiles").text(formatThousands(actions.total*0.621371, 2) + " miles");
     $("#firstDate").text(actions.date.getMonth()+1 + "/" + actions.date.getDate() + '/' + actions.date.getFullYear());
@@ -324,9 +335,10 @@ function initScroll(actions){
     $("#walked").text(formatThousands(actions.walked*.621371, 2));
     $("#ran").text(formatThousands(actions.ran*.621371, 2));
     $("#biked").text(formatThousands(actions.biked*.621371, 2));
-    $("#planeCo2").text(formatThousands(calcPlaneCo(actions.flew*.621371), 2));
-    $("#carCo2").text(formatThousands(calcCarCo(actions.driven*.621371), 2));
+    $("#planeCo2").text(formatThousands(planeCo2, 2));
+    $("#carCo2").text(formatThousands(carCo2, 2));
     $("#savedCo2").text(formatThousands(calcCarCo(actions.walked*.621371+actions.ran*.621371+actions.biked*.621371), 2));
+    $("#costCo2").text(((planeCo2 + carCo2) * 4.99 / 1000.0).toFixed(2));
 
 
     //smooth scrolling init

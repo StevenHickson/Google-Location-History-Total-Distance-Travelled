@@ -58,6 +58,17 @@
     background:url("./../components/road.png");
 }
 
+#tree{
+  background:url("./../components/tree.png") no-repeat;
+  width:100%;
+  height:100%;
+  background-size:contain;
+  left:0;
+  right:0;
+  margin-left:auto;
+  margin-right:auto;
+}
+
 #path{
   background-color: #757575;
 }
